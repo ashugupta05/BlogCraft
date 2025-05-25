@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const Dashboard = () => {
   // Dummy data for demonstration
@@ -28,17 +30,37 @@ const Dashboard = () => {
     }
   };
 
+  const handleDownloadPDF = async () => {
+    const table = document.querySelector('table');
+    const canvas = await html2canvas(table);
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save('my-posts.pdf');
+  };
+
   return (
     <div className="w-full min-h-screen bg-gray-50 p-4">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900">My Posts</h1>
-          <Link
-            to="/editor"
-            className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-500"
-          >
-            New Post
-          </Link>
+          <div className="flex gap-2">
+            <button
+              onClick={handleDownloadPDF}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-500 flex items-center gap-2"
+            >
+              <ArrowDownTrayIcon className="h-5 w-5" />
+              Download PDF
+            </button>
+            <Link
+              to="/editor"
+              className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-500"
+            >
+              New Post
+            </Link>
+          </div>
         </div>
 
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">

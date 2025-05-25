@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { DocumentArrowDownIcon } from '@heroicons/react/24/outline';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const Editor = () => {
   const [content, setContent] = useState('');
@@ -20,9 +22,44 @@ const Editor = () => {
     alert('Post saved successfully!');
   };
 
-  const exportToPDF = () => {
-    // TODO: Implement PDF export
-    alert('PDF export coming soon!');
+  const exportToPDF = async () => {
+    try {
+      // Create a temporary div to render the markdown content
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = `
+        <div style="padding: 20px; font-family: Arial, sans-serif;">
+          <h1 style="font-size: 24px; margin-bottom: 20px;">${title}</h1>
+          <div style="font-size: 14px; line-height: 1.6;">
+            ${content}
+          </div>
+        </div>
+      `;
+      document.body.appendChild(tempDiv);
+
+      // Convert the content to canvas
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+
+      // Remove the temporary div
+      document.body.removeChild(tempDiv);
+
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      // Add the content to PDF
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+      
+      // Save the PDF
+      pdf.save(`${title.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
   };
 
   const exportToCSV = () => {
@@ -39,13 +76,15 @@ const Editor = () => {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
-          <input
-            type="text"
-            placeholder="Enter post title..."
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="text-3xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 w-full dark:text-white"
-          />
+          <div className="flex-1 mr-4">
+            <input
+              type="text"
+              placeholder="Enter post title..."
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="text-3xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 w-full dark:text-white"
+            />
+          </div>
           <div className="flex space-x-2">
             <div className="relative group">
               <button
